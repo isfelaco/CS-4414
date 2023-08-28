@@ -2,7 +2,6 @@
 #include<string.h> 
 #include <stdlib.h> 
 
-
 typedef struct list_item {
     struct list_item *pred, *next;
     void *datum;
@@ -36,6 +35,9 @@ void list_init(list_t *l, int (*compare) (const void *key, const void *with), vo
     l->datum_delete = datum_delete;
 }
 
+/* 
+delete later
+*/
 void list_print(list_t *l) {
     list_item_t *current = l->head;
     while (current != NULL) {
@@ -45,6 +47,11 @@ void list_print(list_t *l) {
     }
 }
 
+/*
+TO-DO:
+should iterate through the list similar to list_print above
+but instead of printf(), call the function visitor on the item
+*/
 void list_visit_items(list_t *l, void (*visitor) (void *v)) {
     // takes a pointer to a function `visitor` 
     // and calls it on each member of l in order from l->head to l->tail
@@ -65,18 +72,18 @@ void list_insert_tail(list_t *l, void *v) {
         l->head = new_item;
         l->tail = new_item;
     } else { // insert at the tail
-        new_item->pred = l->tail; // move the tail before the new item
-        l->tail->next = new_item; // link the tail to the new item
-        l->tail = new_item; // replace list tail with new item
+        new_item->pred = l->tail;   // move the tail before the new item
+        l->tail->next = new_item;   // link the tail to the new item
+        l->tail = new_item;         // replace list tail with new item
     }
     l->length++;
 }
 
 void list_remove_head(list_t *l) {
     list_item_t *current = l->head;
-    current->next->pred = NULL;
-    l->head = current->next;
-    free(current);
+    l->head = current->next;    // next item in list is the new head
+    l->head>pred = NULL;        // head should have no item before it
+    free(current);              // free up the space
 }
 
 
@@ -125,9 +132,3 @@ int main(int argc, char* argv[]) {
     }
     return 0;
 }
-
-// malloc() : returns a pointer to the newly allocated space on success or NULL on failure
-    // void *malloc(size_t size)
-// free() : deallocates storage originally allocated
-    // void free(void *ptr)
-    // error to call on a null pointer
