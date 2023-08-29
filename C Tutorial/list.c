@@ -63,6 +63,7 @@ void list_remove_head(list_t *l) {
     list_item_t *current = l->head;
     l->head = current->next;     // next item in list is the new head
     l->head->pred = NULL;        // head should have no item before it
-    l->datum_delete(current);    // free up the space
+    l->datum_delete(current->datum);
+    l->datum_delete(current);
     l->length--;
 }
