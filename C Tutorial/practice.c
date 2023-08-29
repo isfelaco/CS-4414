@@ -14,19 +14,6 @@ typedef struct list {
     void (*datum_delete) (void *);
 } list_t;
 
-int int_compar(const void *arg1, const void *arg2) {
-    int *pleft = (int)arg1;
-    int *pright = (int)arg2;
-
-    if (*pleft < *pright) return -1;
-    else if (*pleft == *pright) return 0;
-    else return 1;
-}
-
-void delete_int(void *data) {
-    free(data);
-}
-
 void list_init(list_t *l, int (*compare) (const void *key, const void *with), void (*datum_delete)(void *datum)) {
     l->head = NULL;
     l->tail = NULL;
@@ -35,30 +22,15 @@ void list_init(list_t *l, int (*compare) (const void *key, const void *with), vo
     l->datum_delete = datum_delete;
 }
 
-/* 
-delete later
-*/
-void list_print(list_t *l) {
-    list_item_t *current = l->head;
-    while (current != NULL) {
-        char *num = (char*)current->datum;
-        printf("%s", num);
-        current = current->next;
-    }
-}
-
-/*
-TO-DO:
-should iterate through the list similar to list_print above
-but instead of printf(), call the function visitor on the item
-*/
 void list_visit_items(list_t *l, void (*visitor) (void *v)) {
     // takes a pointer to a function `visitor` 
     // and calls it on each member of l in order from l->head to l->tail
     // visitor will need to be the address of a function that can display
     // the list-item contents
-    for (int i = 0; i < l->length; i++) {
-        visitor(&l[i]);
+    list_item_t *current = l->head;
+    while (current != NULL) {
+        visitor(current->datum);
+        current = current->next;
     }
 }
 
@@ -81,15 +53,24 @@ void list_insert_tail(list_t *l, void *v) {
 
 void list_remove_head(list_t *l) {
     list_item_t *current = l->head;
-    l->head = current->next;    // next item in list is the new head
-    l->head>pred = NULL;        // head should have no item before it
-    free(current);              // free up the space
+    l->head = current->next;     // next item in list is the new head
+    l->head->pred = NULL;        // head should have no item before it
+    l->datum_delete(current);    // free up the space
+    l->length--;
 }
 
+void list_print_item(void *v) {
+    char *item = (char*) v;
+    printf("%s", item);
+}
+
+void list_item_delete(void *data) {
+    free(data);
+}
 
 int main(int argc, char* argv[]) {
     list_t l;
-    list_init(&l, int_compar, delete_int);
+    list_init(&l, NULL, list_item_delete);
 
     FILE *file = fopen(argv[1], "r");
 
@@ -106,6 +87,7 @@ int main(int argc, char* argv[]) {
                 while  (fgets(line, sizeof(line), file) != NULL) {
                     printf("%s", line);
                 }
+                // exit
             }
             else if (strcmp(argv[2], "tail") == 0) {
                 // after input has been added to list, print contents
@@ -113,8 +95,8 @@ int main(int argc, char* argv[]) {
                     char *line_copy = strdup(line);
                     list_insert_tail(&l, line_copy);
                 }
-                // use list_items_visit for this
-                list_print(&l);
+                list_visit_items(&l, list_print_item);
+                // exit
             }
             else if (strcmp(argv[2], "tail-remove") == 0){
                 while  (fgets(line, sizeof(line), file) != NULL) {
@@ -124,8 +106,8 @@ int main(int argc, char* argv[]) {
                 list_remove_head(&l);
                 list_remove_head(&l);
                 list_remove_head(&l);
-                // use list_items_visit for this
-                list_print(&l);
+                list_visit_items(&l, list_print_item);
+                // exit
             }
             fclose(file);
         }   
