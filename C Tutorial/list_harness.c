@@ -27,7 +27,7 @@ int main(int argc, char* argv[]) {
                     printf("%s", line);
                 }
                 fclose(file);
-                exit(-1);
+                exit(0);
             }
             else if (strcmp(argv[2], "tail") == 0) {
                 // after input has been added to list, print contents
@@ -37,7 +37,7 @@ int main(int argc, char* argv[]) {
                 }
                 list_visit_items(&l, list_print_item);
                 fclose(file);
-                exit(-1);
+                exit(0);
             }
             else if (strcmp(argv[2], "tail-remove") == 0){
                 while  (fgets(line, sizeof(line), file) != NULL) {
@@ -49,12 +49,12 @@ int main(int argc, char* argv[]) {
                 list_remove_head(&l);
                 list_visit_items(&l, list_print_item);
                 fclose(file);
-                exit(-1);
+                exit(0);
             }
         } else {
             printf("Please provide a second parameter, either \'echo\', \'tail\', or \'tail-remove\'.\n");
             fclose(file);
-            exit(-1);
+            exit(0);
         }  
     }
     return 0;

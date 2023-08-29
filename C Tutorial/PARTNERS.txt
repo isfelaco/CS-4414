@@ -1,0 +1,7 @@
+partner 1: Bella Felaco, isf4rjk@virginia.edu
+
+partner 2: Michelle Nguyen, mtn7vez@virginia.edu
+
+We met on Zoom and worked through the harness file together, debugging reading input.
+Bella did the list_insert_tail and list_remove_head while Michelle worked on list_visit_items and our helper function in the harness file, list_print_item.
+Michelle also wrote the Makefile.
