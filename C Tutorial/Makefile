@@ -3,6 +3,6 @@ CFLAGS = -g -Og
 
 OBJECTS = list_harness.o
 
-a.out: $(OBJECTS)
+list_harness: $(OBJECTS)
 	$(CC) -o $@ $(CFLAGS) $(OBJECTS)
 	
