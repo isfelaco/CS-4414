@@ -1,8 +1,8 @@
 CC = gcc
 CFLAGS = -g -Og
 
-OBJECTS = practice.o
+OBJECTS = list_harness.o
 
-list_harness: $(OBJECTS)
+a.out: $(OBJECTS)
 	$(CC) -o $@ $(CFLAGS) $(OBJECTS)
 	
