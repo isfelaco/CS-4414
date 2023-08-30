@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include<string.h> 
 #include <stdlib.h> 
-#include "list.c"
+#include "list.h"
 
 void list_print_item(void *v) {
     char *item = (char*) v;

@@ -1,8 +1,8 @@
 CC = gcc
 CFLAGS = -g -Og
 
-OBJECTS = list_harness.o
 
-list_harness: $(OBJECTS)
-	$(CC) -o $@ $(CFLAGS) $(OBJECTS)
+list_harness: list_harness.o
+	$(CC) -o $@ $(CFLAGS) list_harness.o
 	
+list_harness.o: list_harness.c list.h
