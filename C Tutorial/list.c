@@ -17,11 +17,12 @@ void list_init(list_t *l, int (*compare) (const void *key, const void *with), vo
     visitor will need to be the address of a function that can display the list-item contents
 */
 void list_visit_items(list_t *l, void (*visitor) (void *v)) {
-    // 
-    list_item_t *current = l->head;
-    while (current != NULL) {
-        visitor(current->datum);
-        current = current->next;
+    if (l->length > 0) {
+        list_item_t *current = l->head;
+        while (current != NULL) {
+            visitor(current->datum);
+            current = current->next;
+        }
     }
 }
 
@@ -49,10 +50,13 @@ void list_insert_tail(list_t *l, void *v) {
     remove item from the head of the list
 */
 void list_remove_head(list_t *l) {
+    if (l->length == 0 || l->head == NULL)  return; // no data to delete
     list_item_t *current = l->head;
-    l->head = current->next;     // next item in list is the new head
-    l->head->pred = NULL;        // head should have no item before it
+    if (l->length > 1) {    // if there is another element, set it to new head
+        l->head = current->next;     // next item in list is the new head
+        l->head->pred = NULL;        // head should have no item before it
+    }
     l->datum_delete(current->datum);
-    l->datum_delete(current);
+    free(current);
     l->length--;
 }
