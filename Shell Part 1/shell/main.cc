@@ -1,12 +1,9 @@
 #include <cstdlib>
 #include <iostream>
 #include <string>
+#include <vector>
 
 void parse_and_run_command(const std::string &command) {
-    /* TODO: Implement this. */
-    /* Note that this is not the correct way to test for the exit command.
-       For example the command "   exit  " should also exit your shell.
-     */
     /*
     REQUIREMENTS:
         run simple commands (e.g. /bin/cat foo.txt bar.txt)
@@ -18,9 +15,46 @@ void parse_and_run_command(const std::string &command) {
         prints out error messages to stderr (e.g. via std:cerr)
         does not involve the system's shell
     */
-    if (command == "exit") {
-        exit(0);
+   
+    // Parse command line
+    // source: https://www.geeksforgeeks.org/split-a-sentence-into-words-in-cpp/
+    std::vector<std::string> commands;
+    std::string tempWord;
+    for (char c : command) {
+        // Check if the character is a whitespace character
+        if (isspace(c)) {
+            // If the temporary string is not empty, add it to the list of words
+            if (!tempWord.empty()) {
+                commands.push_back(tempWord);
+                tempWord.clear();
+            }
+        } else {
+            // If the character is not a whitespace character, add it to the temporary string
+            tempWord.push_back(c);
+        }
     }
+    if (!tempWord.empty()) {
+        commands.push_back(tempWord);
+    }
+    
+
+    // Run commands
+    for (std::string token : commands) {
+        std::cout << token << std::endl;
+        if (token == "exit") {
+            exit(0);
+        }
+        if (token[0] == '/') {
+            // file path
+        }
+        if (token == "<") {
+            // input redirection
+        }
+        if (token == ">") {
+            // output redirection
+        }
+    }
+  
     std::cerr << "Not implemented.\n";
 }
 
