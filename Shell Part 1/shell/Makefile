@@ -1,5 +1,6 @@
 CXX = g++
 CXXFLAGS = -Wall -Werror -pedantic -Og -g -std=c++17 -fsanitize=address -fsanitize=undefined -D_GLIBCXX_DEBUG
+SUBMIT_FILENAME=isfk4rjk.mtn7vez.shell_part1
 
 all: msh
 
