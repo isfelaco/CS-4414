@@ -1,3 +1,4 @@
+ARGSmain.cc
 #include <cstdlib>
 #include <iostream>
 #include <string>
@@ -58,17 +59,17 @@ void parse_and_run_command(const std::string &command) {
         if (tokens[i][0] == '/') {
             thisCommand = tokens[i];
         }
-        else if (tokens[i] == "<") {
+        if (tokens[i] == "<") {
             // input redirection
             redirect_input = true;
             input_file = tokens[i+1]; // next token is input file name
         }
-        else if (tokens[i] == ">") {
+        if (tokens[i] == ">") {
             // output redirection
             redirect_output = true;
             output_file = tokens[i+1]; // next token is output file name
         }
-        else {
+        else if (tokens[i][0] != '/') {
             args.push_back(tokens[i]);
         }
         /* TODO: parse arguments and possibly save in an array */
@@ -94,7 +95,7 @@ void parse_and_run_command(const std::string &command) {
         dup2(fd, STDOUT_FILENO); // close stdout, copy file descriptor fd into standard output
         close(fd); // close file descriptor
     }
-    /* TODO: add multiple arguments to command, prevent it from exiting after executing command */
+    /* TODO: add arguments to command, prevent it from exiting after executing command */
     execlp(thisCommand.c_str(), thisCommand.c_str(), args[0].c_str());
     /* TODO: print exit status */
 
