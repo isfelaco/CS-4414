@@ -94,10 +94,10 @@ void parse_and_run_command(const std::string &command) {
 
     pid_t pid = fork();
 
-    if (pid == -1) {
+    if (pid == -1) { // fork error
         perror("fork");
         exit(1);
-    } else if (pid == 0) {
+    } else if (pid == 0) { // in the child
     // redirect first
         if (redirect_input) {
             /* TODO: not sure if this works yet, haven't tried a command that uses it */
@@ -126,8 +126,10 @@ void parse_and_run_command(const std::string &command) {
             argv[i + 1] = const_cast<char *>(args[i].c_str());
         }
         argv[args.size() + 1] = nullptr;
-
+        
+	// cout << "CMD" << cmd << "ARGV" << argv << endl;
         execvp(cmd, argv);
+        
         // If execvp fails, handle the error and exit
         perror("execvp");
         exit(1);
@@ -137,7 +139,7 @@ void parse_and_run_command(const std::string &command) {
         waitpid(pid, &status, 0);
         if (WIFEXITED(status)) {
             // Print the exit status of the child process
-            cout << "Child process exited with status: " << WEXITSTATUS(status) << endl;
+            cout << tokens[0] << " exit status: " << WEXITSTATUS(status) << endl;
         } else {
             cerr << "Child process did not exit normally." << endl;
         }
