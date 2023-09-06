@@ -54,13 +54,14 @@ void parse_and_run_command(const std::string &command) {
         if (tokens[i] == "<") {
             // input redirection
             redirect_input = true;
-            input_file = tokens[i+1];
+            input_file = tokens[i+1]; // next token is input file name
         }
         if (tokens[i] == ">") {
             // output redirection
             redirect_output = true;
-            output_file = tokens[i+1];
+            output_file = tokens[i+1]; // next token is output file name
         }
+        /* TODO: parse arguments and possibly save in an array */
     }
 
     // Run command
@@ -68,7 +69,13 @@ void parse_and_run_command(const std::string &command) {
         if (token[0] == '/') {
             // redirect first
             if (redirect_input) {
-                cout << "Redirect Input" << endl;         
+                /* TODO: not sure if this works yet, haven't tried a command that uses it */
+                int fd;
+                if ((fd = open(output_file.c_str(), O_RDONLY)) == 1) {
+                    perror("open");
+                }
+                dup2(fd, STDIN_FILENO); // close stdin, copy file descriptor fd into standard input
+                close(fd); // close file descriptor       
             }
             if (redirect_output) {
                 int fd;
@@ -78,8 +85,9 @@ void parse_and_run_command(const std::string &command) {
                 dup2(fd, STDOUT_FILENO); // close stdout, copy file descriptor fd into standard output
                 close(fd); // close file descriptor
             }
-            string com = "ls";
-            execlp(token.c_str(), com.c_str(), NULL);
+            /* TODO: add arguments to command, prevent it from exiting after executing command */
+            execlp(token.c_str(), token.c_str());
+            /* TODO: print exit status */
         }
     }
 }
