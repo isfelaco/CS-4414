@@ -101,7 +101,7 @@ void parse_and_run_command(const std::string &command) {
     // redirect first
         if (redirect_input) {
             /* TODO: not sure if this works yet, haven't tried a command that uses it */
-            int fd =  open(output_file.c_str(), O_RDONLY);
+            int fd =  open(input_file.c_str(), O_RDONLY);
             if (fd == -1) {
                 perror("open");
                 exit(1);
