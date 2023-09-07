@@ -1,0 +1,5 @@
+partner 1: Bella Felaco, isf4rjk@virginia.edu
+
+partner 2: Michelle Nguyen, mtn7vez@virginia.edu
+
+We met at office hours and over Zoom to discuss our plan for the assignment, where Michelle researched commands while Bella began coding the shell. For most of the assignment, Bella wrote the initial code and did debugging with Michelle looking over it, debugging, and checking it worked on the department machines. 
