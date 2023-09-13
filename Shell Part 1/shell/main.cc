@@ -57,15 +57,17 @@ void parse_and_run_command(const string &command) {
     }
     /* end source */
 
-    bool redirect_input = false;
-    bool redirect_output = false;
-    const char* input_file;
-    const char* output_file;
-    
-    string cmd_str;
-    vector<string> cmd_args;
 
-    for (vector<string> c : commands) {
+
+    for (unsigned int j = 0; j < commands.size(); j++) {
+        vector<string> c = commands[j];
+        bool redirect_input = false;
+        bool redirect_output = false;
+        const char* input_file;
+        const char* output_file;
+        
+        string cmd_str;
+        vector<string> cmd_args;
         /* Find any exits or redirects in the tokens */
         for (unsigned int i = 0; i < c.size(); ++i) {
             string token = c[i];
@@ -112,21 +114,32 @@ void parse_and_run_command(const string &command) {
         /* EXECUTE THE COMMAND */
 
         /*
-        if (i >= 0 && i < totalcmd-1) // there are multiple commands
-            pipe(int pipefd[2]) // pipe array is used to return two file descriptors referring to the ends of the pipe
-        Pid = Fork()
-        if (pid==0) // in child process
+        for each command i
+        if (i >= 0 && i < totalcmd-1) // not the last command
+            pipe(int pipe[2]) // pipe array is used to return two file descriptors referring to the ends of the pipe
+        pid = fork()
+        if (pid == 0) // in child process
             Do redirection if there is any redirection in this command
-        if (i > 0) // if command not the first command
-            close(stdin)
-            dup(previous_pipe_out) // read from the write end of previous pipe
-        if (i < totalcmds - 1) // not last command ?
-            close(stdout) // close out file
-            dup(pipe_out) // open the pipe write end to write
-        close the pipes that are not needed
-
+            if (i > 0) // if command not the first command
+                close(stdin)
+                dup(previous_pipe_out) // read from the write end of previous pipe
+            if (i < totalcmds - 1) // not last command ?
+                close(stdout) // close out file
+                dup(pipe_out) // open the pipe write end to write
+            close the pipes that are not needed
+        else // parent process
         if it is the last command, we want to write to the termina/redirection file
         */
+
+        /* Pipe */
+        int pipefd[2];
+        if (j >= 0 && j < commands.size()-1) { // not the last command
+            int fd = pipe(pipefd); // pipe array is used to return two file descriptors referring to the ends of the pipe
+            if (fd == -1) {
+                perror("pipe");
+                exit(1);
+            }
+        }
 
         /* Fork */
         pid_t pid = fork();
@@ -136,6 +149,12 @@ void parse_and_run_command(const string &command) {
             cout << "> " << endl;
             exit(1);
         } else if (pid == 0) { // child process
+
+            if (j > 0) // if command not the first command
+                dup2(pipefd[0], STDIN_FILENO); // read from the write end of previous pipe
+            if (j < commands.size() - 1) // not last command
+                dup2(pipefd[1], STDOUT_FILENO); // open the pipe write end to write
+
             /* Redirect first */
             if (redirect_input) {
                 int fd =  open(input_file, O_RDONLY);
@@ -165,14 +184,19 @@ void parse_and_run_command(const string &command) {
             }
             argv[cmd_args.size() + 1] = nullptr;
 
-
             /* Run the command */
             int exec_status = execv(cmd, argv);
             if (exec_status == -1) {
                 cerr << "invalid command / Command not found" << endl;
                 exit(1);
             }
+
+            close(pipefd[0]);
+            close(pipefd[1]);
+            delete argv;
         } else { // parent process
+            close(pipefd[0]);
+            close(pipefd[1]);
             int status;
             waitpid(pid, &status, 0);
             if (WIFEXITED(status)) {
