@@ -1046,8 +1046,7 @@ PIPE_TESTS = [
     },
 ]
 
-TESTS = NON_PIPE_TESTS 
-# + PIPE_TESTS
+TESTS = NON_PIPE_TESTS + PIPE_TESTS
 
 def to_bytes(s):
     return bytes(s, 'UTF-8')

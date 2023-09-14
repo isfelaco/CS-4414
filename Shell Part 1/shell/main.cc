@@ -69,6 +69,7 @@ void parse_and_run_command(const string &command) {
     /* end source */
 
     int prev_pipefd[2];
+    vector<int> pidlist;
 
     for (unsigned int j = 0; j < commands.size(); j++) {
         vector<string> c = commands[j];
@@ -135,7 +136,7 @@ void parse_and_run_command(const string &command) {
 		
         /* Fork */
         pid_t pid = fork();
-        vector<int> pidlist;
+        pidlist.push_back(pid); // add pid to list of pids that need to be waited
 
         if (pid == -1) { // fork error
             /* TODO: this shouldn't exit, it should return to next input */
@@ -204,20 +205,15 @@ void parse_and_run_command(const string &command) {
 
             prev_pipefd[0] = pipefd[0];
             prev_pipefd[1] = pipefd[1];
-
-            int status;
             
-            pidlist.push_back(pid); // add pid to list of pids that need to be waited
-            
-            if (j == commands.size() - 1) { // start waiting if j is final command
-            
-            	for (unsigned int ppid = 0; ppid < pidlist.size(); ppid++) {
+            if (j == commands.size() - 1) { // start waiting if j is final command            	for (unsigned int ppid = 0; ppid < pidlist.size(); ppid++) {
+                    int status;
             		waitpid(ppid, &status, 0); // loop to wait pids
-            		
             		if (WIFEXITED(status)) {
                 /* Print the exit status of the child process */
-                		cout << cmd_str << " exit status: " << WEXITSTATUS(status) << endl;
+                		cout << commands[ppid][0] << " exit status: " << WEXITSTATUS(status) << endl;
             		}
+                    // else cout << cmd_str << endl;
             	} 
             }
 
