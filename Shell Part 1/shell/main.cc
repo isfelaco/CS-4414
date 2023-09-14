@@ -57,7 +57,7 @@ void parse_and_run_command(const string &command) {
     }
     /* end source */
 
-
+    int prev_pipefd[2];
 
     for (unsigned int j = 0; j < commands.size(); j++) {
         vector<string> c = commands[j];
@@ -133,9 +133,8 @@ void parse_and_run_command(const string &command) {
 
         /* Pipe */
         int pipefd[2];
-        if (j >= 0 && j < commands.size()-1) { // not the last command
-            int fd = pipe(pipefd); // pipe array is used to return two file descriptors referring to the ends of the pipe
-            if (fd == -1) {
+        if (j >= 0 && j < commands.size() - 1) { // not the last command
+            if (pipe(pipefd)) {
                 perror("pipe");
                 exit(1);
             }
@@ -149,12 +148,6 @@ void parse_and_run_command(const string &command) {
             cout << "> " << endl;
             exit(1);
         } else if (pid == 0) { // child process
-
-            if (j > 0) // if command not the first command
-                dup2(pipefd[0], STDIN_FILENO); // read from the write end of previous pipe
-            if (j < commands.size() - 1) // not last command
-                dup2(pipefd[1], STDOUT_FILENO); // open the pipe write end to write
-
             /* Redirect first */
             if (redirect_input) {
                 int fd =  open(input_file, O_RDONLY);
@@ -184,19 +177,39 @@ void parse_and_run_command(const string &command) {
             }
             argv[cmd_args.size() + 1] = nullptr;
 
+            if (j > 0) {// if command not the first command
+                dup2(prev_pipefd[0], STDIN_FILENO); // read from the write end of previous pipe
+                close(prev_pipefd[0]); // close original read end of the pipe
+                close(prev_pipefd[1]); // close write end of pipe in the current process
+            }
+            if (j < commands.size() - 1) {// not last command   
+                close(pipefd[0]); // close read end of pipe in current process
+                dup2(pipefd[1], STDOUT_FILENO); // open the pipe write end to write
+                close(pipefd[1]);
+            }
+
             /* Run the command */
-            int exec_status = execv(cmd, argv);
-            if (exec_status == -1) {
+            if (access(cmd, X_OK) == 0) { // Check if the command is executable
+                int exec_status = execv(cmd, argv);
+                if (exec_status == -1) {
+                    cerr << "invalid command / Command not found" << endl;
+                    exit(1);
+                }
+            } else {
                 cerr << "invalid command / Command not found" << endl;
                 exit(1);
             }
 
-            close(pipefd[0]);
-            close(pipefd[1]);
-            delete argv;
+            delete[] argv;
         } else { // parent process
-            close(pipefd[0]);
-            close(pipefd[1]);
+            if (j > 0) {
+                close(prev_pipefd[0]);
+                close(prev_pipefd[1]);
+            }
+
+            prev_pipefd[0] = pipefd[0];
+            prev_pipefd[1] = pipefd[1];
+
             int status;
             waitpid(pid, &status, 0);
             if (WIFEXITED(status)) {
