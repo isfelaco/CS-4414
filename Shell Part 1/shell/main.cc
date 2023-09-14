@@ -206,7 +206,8 @@ void parse_and_run_command(const string &command) {
             prev_pipefd[0] = pipefd[0];
             prev_pipefd[1] = pipefd[1];
             
-            if (j == commands.size() - 1) { // start waiting if j is final command            	for (unsigned int ppid = 0; ppid < pidlist.size(); ppid++) {
+            if (j == commands.size() - 1) { // start waiting if j is final command            	
+            	for (unsigned int ppid = 0; ppid < pidlist.size(); ppid++) {
                     int status;
             		waitpid(ppid, &status, 0); // loop to wait pids
             		if (WIFEXITED(status)) {
