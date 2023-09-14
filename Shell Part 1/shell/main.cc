@@ -29,22 +29,33 @@ void parse_and_run_command(const string &command) {
     vector<vector<string>> commands;
     vector<string> tokens;;
     string tempWord;
-    for (char c : command) {
+    for (unsigned int i = 0; i < command.length(); ++i) {
+        char c = command[i];
         // Check if the character is a whitespace character
         if (isspace(c)) {
+            // piping character must be surrounded by spaces
+            if (command[i+1] == '|' && isspace(command[i+2])) {                
+                if (!tempWord.empty()) {
+                    tokens.push_back(tempWord);
+                    tempWord.clear();
+                }
+                commands.push_back(tokens);
+                tokens.clear();
+                i += 2;
+            }
+            // there is no command after the piping character
+            else if (command[i+1] == '|' && i+2 == command.length()) {
+                cerr << "invalid command" << endl;
+                exit(1);
+            }
             // If the temporary string is not empty, add it to the list of words
-            if (!tempWord.empty()) {
+            else if (!tempWord.empty()) {
                 tokens.push_back(tempWord);
                 tempWord.clear();
             }
+            
         }
-        else if (c == '|') {
-            if (!tempWord.empty()) {
-                tokens.push_back(tempWord);
-            }
-            commands.push_back(tokens);
-            tokens.clear();
-        } else {
+        else {
             // If the character is not a whitespace character, add it to the temporary string
             tempWord.push_back(c);
         }
@@ -112,25 +123,6 @@ void parse_and_run_command(const string &command) {
             }
         }
         /* EXECUTE THE COMMAND */
-
-        /*
-        for each command i
-        if (i >= 0 && i < totalcmd-1) // not the last command
-            pipe(int pipe[2]) // pipe array is used to return two file descriptors referring to the ends of the pipe
-        pid = fork()
-        if (pid == 0) // in child process
-            Do redirection if there is any redirection in this command
-            if (i > 0) // if command not the first command
-                close(stdin)
-                dup(previous_pipe_out) // read from the write end of previous pipe
-            if (i < totalcmds - 1) // not last command ?
-                close(stdout) // close out file
-                dup(pipe_out) // open the pipe write end to write
-            close the pipes that are not needed
-        else // parent process
-        if it is the last command, we want to write to the termina/redirection file
-        */
-
         /* Pipe */
         int pipefd[2];
         if (j >= 0 && j < commands.size() - 1) { // not the last command
@@ -144,6 +136,7 @@ void parse_and_run_command(const string &command) {
         pid_t pid = fork();
 
         if (pid == -1) { // fork error
+            /* TODO: this shouldn't exit, it should return to next input */
             cerr << "Fork failed" << endl;
             cout << "> " << endl;
             exit(1);
@@ -177,12 +170,12 @@ void parse_and_run_command(const string &command) {
             }
             argv[cmd_args.size() + 1] = nullptr;
 
-            if (j > 0) {// if command not the first command
+            if (j > 0) { // not the first command
                 dup2(prev_pipefd[0], STDIN_FILENO); // read from the write end of previous pipe
                 close(prev_pipefd[0]); // close original read end of the pipe
                 close(prev_pipefd[1]); // close write end of pipe in the current process
             }
-            if (j < commands.size() - 1) {// not last command   
+            if (j < commands.size() - 1) { // not last command   
                 close(pipefd[0]); // close read end of pipe in current process
                 dup2(pipefd[1], STDOUT_FILENO); // open the pipe write end to write
                 close(pipefd[1]);
