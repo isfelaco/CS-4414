@@ -11,18 +11,6 @@
 using namespace std;
 
 void parse_and_run_command(const string &command) {
-    /*
-    REQUIREMENTS:
-        run simple commands (e.g. /bin/cat foo.txt bar.txt)
-        input redirection (e.g. /usr/bin/gcc -E < somefile.txt)
-        output redirection (e.g. /usr/bin/gcc -E > somefile.txt)
-        pipelines of multiple commands (e.g. /bin/cat foo.txt | /bin/grep bar | /bin/grep baz > output.txt)
-        builtin command exit
-        outputs the exit status of each command
-        prints out error messages to stderr (e.g. via std:cerr)
-        does not involve the system's shell
-    */
-   
     /* PARSE THE INPUT */
     /* Parse the commnd line, separating tokens by whitespace */
     /* source: https://www.geeksforgeeks.org/split-a-sentence-into-words-in-cpp/ */
@@ -48,24 +36,16 @@ void parse_and_run_command(const string &command) {
                 cerr << "invalid command" << endl;
                 exit(1);
             }
-            // If the temporary string is not empty, add it to the list of words
             else if (!tempWord.empty()) {
                 tokens.push_back(tempWord);
                 tempWord.clear();
             }
             
         }
-        else {
-            // If the character is not a whitespace character, add it to the temporary string
-            tempWord.push_back(c);
-        }
+        else tempWord.push_back(c);
     }
-    if (!tempWord.empty()) {
-        tokens.push_back(tempWord);
-    }
-    if (!tokens.empty()) {
-        commands.push_back(tokens);
-    }
+    if (!tempWord.empty()) tokens.push_back(tempWord);
+    if (!tokens.empty()) commands.push_back(tokens);
     /* end source */
 
     int prev_pipefd[2];
@@ -90,9 +70,7 @@ void parse_and_run_command(const string &command) {
                 // next token is the input file
                 if (i + 1 < c.size()) {
                     redirect_input = true;
-                    if (c[i+1] == "<" || c[i+1] == ">") {
-                        cerr << "invalid command" << endl;
-                    }
+                    if (c[i+1] == "<" || c[i+1] == ">") cerr << "invalid command" << endl;
                     input_file = c[i + 1].c_str();
                     i++;
                 } else {
@@ -104,9 +82,7 @@ void parse_and_run_command(const string &command) {
                 // next token is the output file
                 if (i + 1 < c.size()) {
                     redirect_output = true;
-                    if (c[i+1] == "<" || c[i+1] == ">") {
-                        cerr << "invalid command" << endl;
-                    }
+                    if (c[i+1] == "<" || c[i+1] == ">") cerr << "invalid command" << endl;
                     output_file = c[i + 1].c_str();
                     i++;
                 } else {
@@ -114,15 +90,12 @@ void parse_and_run_command(const string &command) {
                     return;
                 }
             }
-            else if (cmd_str.empty()) {
-                // token is the command
-                cmd_str = token;
-            }
-            else {
-                // token is an argument to the command
-                cmd_args.push_back(token);
-            }
+            // first token that is not a redirection token is the command
+            else if (cmd_str.empty()) cmd_str = token;
+            // token is an argument to the command
+            else cmd_args.push_back(token);
         }
+
         /* EXECUTE THE COMMAND */
         /* Pipe */
         int pipefd[2];
@@ -138,12 +111,8 @@ void parse_and_run_command(const string &command) {
         pid_t pid = fork();
         pidlist.push_back(pid); // add pid to list of pids that need to be waited
 
-        if (pid == -1) { // fork error
-            /* TODO: this shouldn't exit, it should return to next input */
-            cerr << "Fork failed" << endl;
-            cout << "> " << endl;
-            exit(1);
-        } else if (pid == 0) { // child process
+        if (pid == -1) cerr << "Fork failed" << endl; // fork error
+        else if (pid == 0) { // child process
             /* Redirect first */
             if (redirect_input) {
                 int fd =  open(input_file, O_RDONLY);
@@ -205,22 +174,19 @@ void parse_and_run_command(const string &command) {
 
             prev_pipefd[0] = pipefd[0];
             prev_pipefd[1] = pipefd[1];
-            
-            if (j == commands.size() - 1) { // start waiting if j is final command            	for (unsigned int ppid = 0; ppid < pidlist.size(); ppid++) {
+
+            if (j == commands.size() - 1) { // start waiting if j is final command
+            	for (unsigned int ppid = 0; ppid < pidlist.size(); ppid++) {
                     int status;
-            		waitpid(ppid, &status, 0); // loop to wait pids
-            		if (WIFEXITED(status)) {
-                /* Print the exit status of the child process */
-                		cout << commands[ppid][0] << " exit status: " << WEXITSTATUS(status) << endl;
-            		}
-                    // else cout << cmd_str << endl;
+            		waitpid(pidlist[ppid], &status, 0); // loop to wait pids
+                    if (WIFEXITED(status)) {
+                        /* Print the exit status of the child process */
+                        cout << commands[ppid][0] << " exit status: " << WEXITSTATUS(status) << endl;
+                    }
             	} 
             }
-
-            
-
         }
-    }   
+    }
 }
 
 int main(void) {
