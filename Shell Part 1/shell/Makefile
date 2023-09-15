@@ -1,6 +1,6 @@
 CXX = g++
 CXXFLAGS = -Wall -Werror -pedantic -Og -g -std=c++17 -fsanitize=address -fsanitize=undefined -D_GLIBCXX_DEBUG
-SUBMIT_FILENAME=isfk4rjk.mtn7vez.shell_part1
+SUBMIT_FILENAME=isfk4rjk.mtn7vez.shell_part2
 
 all: msh
 
@@ -13,7 +13,7 @@ clean:
 test: msh
 	python3 shell_test.py
 
-SUBMIT_FILENAME=shell-$(shell date +%Y%m%d%H%M%S).tar.gz
+# SUBMIT_FILENAME=shell-$(shell date +%Y%m%d%H%M%S).tar.gz
 
 archive:
 	tar "--exclude=*.tgz" --exclude=msh --exclude=.git "--exclude=*.o" -zcvf $(SUBMIT_FILENAME) *

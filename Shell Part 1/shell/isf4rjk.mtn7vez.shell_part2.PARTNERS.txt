@@ -1,5 +1,0 @@
-partner 1: Bella Felaco, isf4rjk@virginia.edu
-
-partner 2: Michelle Nguyen, mtn7vez@virginia.edu
-
-We met over Zoom to discuss the assignment and go over/annotate the notes from class. We then each worked on figuring out the structure of the pipes while swapping notes back and forth and discussing possible implementation ideas.
