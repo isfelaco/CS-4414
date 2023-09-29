@@ -1,0 +1,1 @@
+unsigned long rand(void);

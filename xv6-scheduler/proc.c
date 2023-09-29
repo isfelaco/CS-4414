@@ -6,6 +6,8 @@
 #include "x86.h"
 #include "spinlock.h"
 #include "proc.h"
+#include "rand.h"
+#include <stddef.h>
 
 ptable_t ptable;
 
@@ -186,6 +188,9 @@ fork(void)
     return -1;
   }
 
+  np->timesscheduled = 0; // initialize to 0 for the new process.
+  np->tickets = myproc()->tickets; // inherit the parent's number of tickets
+
   // Copy process state from proc.
   if((np->pgdir = copyuvm(curproc->pgdir, curproc->sz)) == 0){
     kfree(np->kstack);
@@ -308,6 +313,35 @@ wait(void)
   }
 }
 
+
+struct proc *
+lottery_scheduler(void)
+{
+  int total_tickets = 0;
+  struct proc *p;
+
+  // Calculate the total number of tickets
+  for (p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
+    if (p->state != RUNNABLE)
+      continue;
+    total_tickets += p->tickets;
+  }
+
+  // Generate a random ticket number between 0 and total_tickets - 1
+  int ticket = rand() % total_tickets;
+
+  // Select the process based on the random ticket
+  for (p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
+    if (p->state != RUNNABLE)
+      continue;
+    if (ticket < p->tickets)
+      return p;
+    ticket -= p->tickets;
+  }
+
+  return NULL; // Shouldn't reach here
+}
+
 //PAGEBREAK: 42
 // Per-CPU process scheduler.
 // Each CPU calls scheduler() after setting itself up.
@@ -330,8 +364,10 @@ scheduler(void)
     // Loop over process table looking for process to run.
     acquire(&ptable.lock);
     for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
-      if(p->state != RUNNABLE)
+      if((p = lottery_scheduler()) == 0)
         continue;
+
+      p->timesscheduled++; // increment timesscheduled for the selected process
 
       // Switch to chosen process.  It is the process's job
       // to release ptable.lock and then reacquire it

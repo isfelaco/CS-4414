@@ -51,6 +51,8 @@ getprocessesinfo(void)
     }
   }
 
+  p->num_processes = i;
+
   // release lock before returning
   release(&ptable->lock);
 

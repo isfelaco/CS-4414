@@ -36,3 +36,16 @@ for tickets, should be able to use process->tickets
 ^^ you can see all of the parts of a process in the proc struct in proc.h
 can use argptr() to get the argument for getprocessesinfo() (but how??)
 can use myproc() to access current process
+
+
+Modify the Scheduler:
+
+Modify the scheduler function in proc.c to use the number of tickets to randomly choose a process to run based on their ticket count.
+Pseudorandom Number Generation:
+
+You will need a pseudorandom number generator to choose processes based on their ticket counts. You can use the provided Park-Miller pseudorandom number generator or another suitable one.
+Ensure that the random numbers generated are scaled to the range of available tickets.
+Testing with timewithtickets.c and lotterytest.c:
+
+Use timewithtickets.c to test your scheduler. This program runs multiple processes with different numbers of tickets and measures how many times each process is scheduled.
+After testing with timewithtickets.c, use lotterytest.c to perform more comprehensive testing. This test program checks the number of times each process is scheduled and performs a statistical test.
