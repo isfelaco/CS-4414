@@ -4,13 +4,10 @@
 #include "memlayout.h"
 #include "mmu.h"
 #include "x86.h"
-#include "proc.h"
 #include "spinlock.h"
+#include "proc.h"
 
-struct {
-  struct spinlock lock;
-  struct proc proc[NPROC];
-} ptable;
+ptable_t ptable;
 
 static struct proc *initproc;
 
@@ -19,12 +16,6 @@ extern void forkret(void);
 extern void trapret(void);
 
 static void wakeup1(void *chan);
-
-void getprocessesinfohelper(void)
-{
- // what to do here?
-
-}
 
 void
 pinit(void)
@@ -537,4 +528,8 @@ procdump(void)
     }
     cprintf("\n");
   }
+}
+
+ptable_t *get_ptable(void) {
+    return &ptable;
 }

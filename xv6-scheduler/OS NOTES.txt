@@ -16,11 +16,6 @@ WHAT I DID:
 - included processesinfo.h in the defs.h file (unsure if this is correct? allows it to be accessed from sysproc.c)
 
 TO DO: 
-- ** fix getprocessesinfo() function (in sysproc.c, currently does not compile properly because of undefined variable usage)
-1. sysproc.c does not have access to the ptable variable that is in proc.c. piazza and slides say to make a helper function in proc.c to access ptable but what to do with helper function? are we allowed to put the entire implementation in the helper function and just have getprocessesinfo() call it from sysproc.c?
-i tried to have the helper function just return ptable but i don't think that works because ptable is an instance of a struct that is only defined in proc.c
-2. how to use argptr() to get the pointer to the processes_info struct? requires 3 variables instead of 2 like argint() (first is index of argument, 0; second is reference to variable we want to use, &p; but what is the third? vscode says it is size but i'm not sure what size to use)
-
 - figure out how to count times a process is scheduled (timesscheduled) (will probably be in the scheduler or similar in proc.c)
 
 - test to make sure settickets() works (test files in link in instructions, need to add to Makefile)

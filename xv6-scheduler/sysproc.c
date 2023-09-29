@@ -6,6 +6,7 @@
 #include "memlayout.h"
 #include "mmu.h"
 #include "proc.h"
+#include <stddef.h>
 
 // prototype for settickets which returns 0 on successful ticket setting
 int 
@@ -21,37 +22,37 @@ settickets(void)
   }
 }
 
-// prototype for getprocessesinfo which does nothing so far
-// basically should get a struct called processes_info and should fill it out with info about all NON-UNUSED processes?
 int 
 getprocessesinfo(void) 
 {
-  // argument: struct processes_info *p
-  // need to use argptr() to grab argument
-  // how?
-  struct processes_info *p; // struct we need to fill in
-  //argptr(0, &p, sizeof(p));
-  // TODO: need to replace all following uses of p with argptr, unsure what the last argument should be?
+  struct processes_info *p;
+  if (argptr(0, (void*)&p, sizeof(*p)) || p == NULL) return -1;
+  // Check if the size matches
+  if (sizeof(struct processes_info) != sizeof(*p)) return -1;
+
+  ptable_t *ptable = get_ptable();
 
   struct proc *proci; // process iterator
-  int n = 0;  // total number of NON-UNUSED processes/keeping track of # of unused processes per iteration of loop
   int i = 0; // counting loop iterations for vectors, should not exceed num_processes?
-  
-  acquire(&ptable.lock); // get lock
+  int n = 0; // Initialize the count of processes
+
+  acquire(&ptable->lock); // get lock
 
   // iterate through process table (from code for kill())
-  for(proci = ptable.proc; proci < &ptable.proc[NPROC]; proci++) {
+  for(proci = ptable->proc, i = 0; proci < &ptable->proc[NPROC]; proci++) {
     // use proci->pid to get pid of process proci
-    if (proci->state != UNUSED) { // only count NON-UNUSED processes!
-      n++; // increment NON-UNUSED processes
-      p->pids[i] = n; // sets pids[i] to the pid of the ith non unused process in ptable
-      p->times_scheduled[i] = proci->timesscheduled;// TODO: set times_scheduled[i] to the number of times proci has been scheduled since creation
-      p->tickets[i] = proci->tickets; // sets tickets[i] to # of tickets assigned to each process
+    if (proci->state != UNUSED) {
+        // Populate p->pids, p->times_scheduled, p->tickets here
+        p->pids[i] = proci->pid;
+        p->times_scheduled[i] = proci->timesscheduled; // TODO: set times_scheduled[i] to the number of times proci has been scheduled since creation
+        p->tickets[i] = proci->tickets; // sets tickets[i] to # of tickets assigned to each process
+        i++; // Increment i for the next valid process
+        n++; // Increment the count of processes
     }
-    i++;
   }
+
   // release lock before returning
-  release(&ptable.lock);
+  release(&ptable->lock);
 
   return 0;
 }
