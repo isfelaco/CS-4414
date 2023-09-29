@@ -1,5 +1,4 @@
 #include "param.h"
-#include "processesinfo.h"
 struct buf;
 struct context;
 struct file;

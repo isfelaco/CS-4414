@@ -107,7 +107,7 @@ extern int sys_yield(void);
 extern int sys_shutdown(void);
 extern int sys_writecount(void);
 extern int setwritecount(void);
-extern int settickets(void);
+extern int sys_settickets(void);
 extern int getprocessesinfo(void);
 
 static int (*syscalls[])(void) = {
@@ -136,7 +136,7 @@ static int (*syscalls[])(void) = {
 [SYS_shutdown] sys_shutdown,
 [SYS_writecount] sys_writecount,
 [SYS_setwritecount] setwritecount,
-[SYS_settickets] settickets,
+[SYS_settickets] sys_settickets,
 [SYS_getprocessesinfo] getprocessesinfo,
 };
 

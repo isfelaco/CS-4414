@@ -6,7 +6,7 @@
 #include "x86.h"
 #include "spinlock.h"
 #include "proc.h"
-#include "rand.h"
+#include "lcg_parkmiller.c"
 #include <stddef.h>
 
 ptable_t ptable;
@@ -140,6 +140,8 @@ userinit(void)
 
   safestrcpy(p->name, "initcode", sizeof(p->name));
   p->cwd = namei("/");
+
+  p->tickets = 10;
 
   // this assignment to p->state lets other cores
   // run this process. the acquire forces the above
@@ -328,7 +330,13 @@ lottery_scheduler(void)
   }
 
   // Generate a random ticket number between 0 and total_tickets - 1
-  int ticket = rand() % total_tickets;
+  // int ticket = next_random() % total_tickets;
+  int ticket;
+  if (total_tickets > 0) { 
+    ticket = next_random() % total_tickets;
+  } else {
+    ticket = -1;
+  }
 
   // Select the process based on the random ticket
   for (p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
@@ -361,12 +369,12 @@ scheduler(void)
     // Enable interrupts on this processor.
     sti();
 
-    // Loop over process table looking for process to run.
     acquire(&ptable.lock);
-    for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
-      if((p = lottery_scheduler()) == 0)
-        continue;
+    // Choose a process to run using the lottery scheduler
+    p = lottery_scheduler();
 
+    // Check if lottery_scheduler returned a valid process
+    if (p != NULL) {
       p->timesscheduled++; // increment timesscheduled for the selected process
 
       // Switch to chosen process.  It is the process's job
@@ -569,3 +577,4 @@ procdump(void)
 ptable_t *get_ptable(void) {
     return &ptable;
 }
+

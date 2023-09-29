@@ -28,7 +28,6 @@ OBJS = \
 	uart.o\
 	vectors.o\
 	vm.o\
-	rand.o\
 
 # Cross-compiling (e.g., on Mac OS X)
 # TOOLPREFIX = i386-jos-elf
@@ -193,9 +192,7 @@ UPROGS=\
     _shutdown\
     _writecount\
     _setwritecount\
-	_getprocessesinfo\
-	_settickets\
-	_lotterytest\
+	_processesinfo\
 	_timewithtickets\
 
 

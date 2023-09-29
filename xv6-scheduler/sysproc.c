@@ -7,10 +7,11 @@
 #include "mmu.h"
 #include "proc.h"
 #include <stddef.h>
+#include "processesinfo.h"
 
 // prototype for settickets which returns 0 on successful ticket setting
 int 
-settickets(void) 
+sys_settickets(void) 
 {
   int number;
   if (argint(0, &number) < 0 || argint(0, &number) > 10000) {
