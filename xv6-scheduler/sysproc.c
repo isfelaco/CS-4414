@@ -18,7 +18,7 @@ sys_settickets(void)
     return -1;
   }
   else {
-    myproc()->tickets = argint(0, &number);
+    myproc()->tickets = number;
     return 0;
   }
 }
@@ -34,25 +34,24 @@ getprocessesinfo(void)
   ptable_t *ptable = get_ptable();
 
   struct proc *proci; // process iterator
-  int i = 0; // counting loop iterations for vectors, should not exceed num_processes?
-  int n = 0; // Initialize the count of processes
+  int n = 0; // count of processes
 
   acquire(&ptable->lock); // get lock
 
   // iterate through process table (from code for kill())
-  for(proci = ptable->proc, i = 0; proci < &ptable->proc[NPROC]; proci++) {
+  for(proci = ptable->proc, n = 0; proci < &ptable->proc[NPROC]; proci++) {
     // use proci->pid to get pid of process proci
     if (proci->state != UNUSED) {
         // Populate p->pids, p->times_scheduled, p->tickets here
-        p->pids[i] = proci->pid;
-        p->times_scheduled[i] = proci->timesscheduled; // TODO: set times_scheduled[i] to the number of times proci has been scheduled since creation
-        p->tickets[i] = proci->tickets; // sets tickets[i] to # of tickets assigned to each process
-        i++; // Increment i for the next valid process
+        p->pids[n] = proci->pid;
+        p->times_scheduled[n] = proci->timesscheduled; // TODO: set times_scheduled[i] to the number of times proci has been scheduled since creation
+        p->tickets[n] = proci->tickets; // sets tickets[i] to # of tickets assigned to each process
         n++; // Increment the count of processes
+
     }
   }
 
-  p->num_processes = i;
+  p->num_processes = n;
 
   // release lock before returning
   release(&ptable->lock);

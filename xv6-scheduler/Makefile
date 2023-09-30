@@ -194,6 +194,7 @@ UPROGS=\
     _setwritecount\
 	_processesinfo\
 	_timewithtickets\
+	_lotterytest\
 
 
 fs.img: mkfs README $(UPROGS)

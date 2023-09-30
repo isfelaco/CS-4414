@@ -1,0 +1,5 @@
+partner 1: Bella Felaco, isf4rjk@virginia.edu
+
+partner 2: Michelle Nguyen, mtn7vez@virginia.edu
+
+We met to discuss the assignment and figure out a plan. Michelle did the settickets and getprocessesinfo and Bella worked on scheduling. Together we debugged to pass tests.
