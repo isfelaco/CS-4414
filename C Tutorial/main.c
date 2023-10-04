@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include<string.h> 
+#include <string.h> 
 #include <stdlib.h> 
 #include "list.h"
 
@@ -19,8 +19,16 @@ int main(int argc, char* argv[]) {
         exit(-1);
     }
     else {
+        fseek(file, 0, SEEK_END);
+        if (ftell(file) == 0) {
+            printf("EMPTY\n");
+            fclose(file);
+            exit(0);
+        }
+        rewind(file);
+
         if (argc > 2) {
-            char line[1024];
+            char line[1024];           
             if (strcmp(argv[2], "echo") == 0) { 
                 // display the input, one word (continguous string of non-whitespace characters) per line, and exit
                 while  (fgets(line, sizeof(line), file) != NULL) {
@@ -40,7 +48,7 @@ int main(int argc, char* argv[]) {
                     char *line_copy = strdup(line);
                     list_insert_tail(&l, line_copy);
                 }
-                for (int i = 0; i <= 3; i++) {
+                for (int i = 0; i < 3; i++) {
                     list_remove_head(&l);
                 }
                 list_visit_items(&l, list_print_item);
