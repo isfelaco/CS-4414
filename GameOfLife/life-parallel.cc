@@ -9,8 +9,8 @@ struct ThreadInfo {
     int Thread_id;
     int steps;
     int num_threads;
-    LifeBoard state;
-    LifeBoard next_state;
+    LifeBoard* state;
+    LifeBoard* next_state;
     pthread_barrier_t* barrier;
 };
 
@@ -26,14 +26,11 @@ void* func(void* arg) {
     int thread_id = info->Thread_id;
     int num_threads = info->num_threads;
     int steps = info->steps;
-    LifeBoard state = info->state;
-    LifeBoard next_state = info->next_state;
+    LifeBoard* state = info->state;
+    LifeBoard* next_state = info->next_state;
     pthread_barrier_t* barrier = info->barrier;
 
-    // Wait behind barrier until other threads finish their job for this step
-    pthread_barrier_wait(barrier);
-
-    int height = state.height();
+    int height = state->height();
 
     // assign a chunk of state to a thread based on a predefined thread id
     int rows_per_thread = height / num_threads;
@@ -50,33 +47,29 @@ void* func(void* arg) {
                  * and count the number of live (true) cells in the window. */
                 for (int y_offset = -1; y_offset <= 1; ++y_offset) {
                     for (int x_offset = -1; x_offset <= 1; ++x_offset) {
-                        if (state.at(x + x_offset, y + y_offset)) {
+                        if (state->at(x + x_offset, y + y_offset)) {
                             ++live_in_window;
                         }
                     }
                 }
                 /* Cells with 3 live neighbors remain or become live.
                    Live cells with 2 live neighbors remain live. */
-               next_state.at(x, y) = (
+                next_state->at(x, y) = (
                     live_in_window == 3 /* dead cell with 3 neighbors or live cell with 2 */ ||
-                    (live_in_window == 4 && state.at(x, y)) /* live cell with 3 neighbors */
+                    (live_in_window == 4 && state->at(x, y)) /* live cell with 3 neighbors */
                 );
             }
         }
-        swap(state, next_state);
-    }
+        pthread_barrier_wait(barrier);
 
+        swap(state, next_state);
+
+        pthread_barrier_wait(barrier);
+    }
     pthread_exit(NULL);
 }
 
 void simulate_life_parallel(int threads, LifeBoard &state, int steps) {
-    /* YOUR CODE HERE
-    initialize next state board (done)
-    initialize barrier (done)
-    create thread vector and initialize each thread using pthread_create() (done)
-    join() all threads using pthread_join (done)
-    */
-
     // next_state as pointer to a LifeBoard
     LifeBoard next_state{state.width(), state.height()};
     
@@ -94,8 +87,8 @@ void simulate_life_parallel(int threads, LifeBoard &state, int steps) {
         threadInfoList[i].Thread_id = i;
         threadInfoList[i].steps = steps;
         threadInfoList[i].num_threads = threads;
-        threadInfoList[i].state = state;
-        threadInfoList[i].next_state = next_state;
+        threadInfoList[i].state = &state;
+        threadInfoList[i].next_state = &next_state;
         threadInfoList[i].barrier = &barrier;
 
         int result = pthread_create(&threadList[i], NULL, &func, &threadInfoList[i]);
