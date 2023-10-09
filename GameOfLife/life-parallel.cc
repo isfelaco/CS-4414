@@ -1,12 +1,14 @@
 #include "life.h"
 #include <pthread.h>
 #include <vector>
+#include <iostream>
 using namespace std;
 
 // prototype for struct to be passed as arg to the thread function func
 struct ThreadInfo {
     int Thread_id;
     int steps;
+    int num_threads;
     LifeBoard state;
     LifeBoard next_state;
     pthread_barrier_t* barrier;
@@ -22,13 +24,14 @@ void* func(void* arg) {
 
     // Extract the thread-specific information
     int thread_id = info->Thread_id;
+    int num_threads = info->num_threads;
     int steps = info->steps;
     LifeBoard* state = &(info->state);
     LifeBoard* next_state = &(info->next_state);
     pthread_barrier_t* barrier = info->barrier;
 
     // Wait behind barrier until other threads finish their job for this step
-    int num_threads = pthread_barrier_wait(barrier);
+    pthread_barrier_wait(barrier);
 
     // assign a chunk of state to a thread based on a predefined thread id
     int rows_per_thread = state->height() / num_threads;
@@ -39,7 +42,7 @@ void* func(void* arg) {
     for (int generation = 0; generation < steps; generation++) {
         // Process the assigned portion of the board
         for (int x = start_row; x < end_row; x++) {
-            for (int y = 0; y < state->width(); y++) {
+            for (int y = 1; y < state->width() -1; y++) {
                 int live_in_window = 0;
                 /* For each cell, examine a 3x3 "window" of cells around it,
                  * and count the number of live (true) cells in the window. */
@@ -77,25 +80,35 @@ void simulate_life_parallel(int threads, LifeBoard &state, int steps) {
     
     // initialize barrier
     pthread_barrier_t barrier;
-    pthread_barrier_init(&barrier, NULL, threads);
+    int result = pthread_barrier_init(&barrier, NULL, threads);
+    if (result != 0) {
+        perror("pthread_barrier_init");
+    }
 
     // make vector of threads
     vector<pthread_t> threadList(threads);
     vector<ThreadInfo> threadInfoList(threads);
-
     for (int i = 0; i < threads; i++) {
         threadInfoList[i].Thread_id = i;
         threadInfoList[i].steps = steps;
+        threadInfoList[i].num_threads = threads;
         threadInfoList[i].state = state;
         threadInfoList[i].next_state = next_state;
         threadInfoList[i].barrier = &barrier;
 
-        pthread_create(&threadList[i], NULL, &func, &threadInfoList[i]);
+        int result = pthread_create(&threadList[i], NULL, &func, &threadInfoList[i]);
+        if (result != 0) {
+            perror("pthread_create");
+        }
     }
 
     // wait for all threads to finish
     for (int i = 0; i < threads; i++) {
-        pthread_join(threadList[i], NULL);
+        void* exit_status;
+        pthread_join(threadList[i], &exit_status);
+        if (exit_status != 0) {
+            perror("pthread_join");
+        }
     }
 
     pthread_barrier_destroy(&barrier);
