@@ -7,8 +7,8 @@ using namespace std;
 struct ThreadInfo {
     int Thread_id;
     int steps;
-    LifeBoard* state;
-    LifeBoard* next_state;
+    LifeBoard state;
+    LifeBoard next_state;
     pthread_barrier_t* barrier;
 };
 
@@ -23,26 +23,44 @@ void* func(void* arg) {
     // Extract the thread-specific information
     int thread_id = info->Thread_id;
     int steps = info->steps;
-    LifeBoard* state = info->state;
-    LifeBoard* next_state = info->next_state;
+    LifeBoard* state = &(info->state);
+    LifeBoard* next_state = &(info->next_state);
     pthread_barrier_t* barrier = info->barrier;
 
-    /*
-    assign a chunk of state to a thread based on a predefined thread id
-    Note: cells at the edge of the grid are always dead (0)
-    Count live neighbours and Update next state is the same as single thread
-    Wait behind barrier until other threads finish their job for this step
-    swap
-    */
+    // Wait behind barrier until other threads finish their job for this step
+    int num_threads = pthread_barrier_wait(barrier);
 
-   /* have each thread work on a different part of the board? 
-    divide the number of items in the grid by number of threads, with some leftover (one thread takes the uneven amt?)
-    each thread calculates its amount and adds it to the next_state 
-    all threads need to wait on barrier?
-    barrier will allow them all to begin 
-    */
+    // assign a chunk of state to a thread based on a predefined thread id
+    int rows_per_thread = state->height() / num_threads;
+    int start_row = thread_id * rows_per_thread;
+    int end_row = (thread_id == num_threads - 1) ? state->height() : start_row + rows_per_thread;
 
-    pthread_barrier_wait(barrier);
+    // Count live neighbours and Update next state is the same as single thread
+    for (int generation = 0; generation < steps; generation++) {
+        // Process the assigned portion of the board
+        for (int x = start_row; x < end_row; x++) {
+            for (int y = 0; y < state->width(); y++) {
+                int live_in_window = 0;
+                /* For each cell, examine a 3x3 "window" of cells around it,
+                 * and count the number of live (true) cells in the window. */
+                for (int y_offset = -1; y_offset <= 1; ++y_offset) {
+                    for (int x_offset = -1; x_offset <= 1; ++x_offset) {
+                        if (state->at(x + x_offset, y + y_offset)) {
+                            ++live_in_window;
+                        }
+                    }
+                }
+                /* Cells with 3 live neighbors remain or become live.
+                   Live cells with 2 live neighbors remain live. */
+                next_state->at(x, y) = (
+                    live_in_window == 3 /* dead cell with 3 neighbors or live cell with 2 */ ||
+                    (live_in_window == 4 && state->at(x, y)) /* live cell with 3 neighbors */
+                );
+            }
+        }
+        swap(state, next_state);
+    }
+
     pthread_exit(NULL);
 }
 
@@ -68,8 +86,8 @@ void simulate_life_parallel(int threads, LifeBoard &state, int steps) {
     for (int i = 0; i < threads; i++) {
         threadInfoList[i].Thread_id = i;
         threadInfoList[i].steps = steps;
-        threadInfoList[i].state = &state;
-        threadInfoList[i].next_state = &next_state;
+        threadInfoList[i].state = state;
+        threadInfoList[i].next_state = next_state;
         threadInfoList[i].barrier = &barrier;
 
         pthread_create(&threadList[i], NULL, &func, &threadInfoList[i]);
@@ -81,10 +99,4 @@ void simulate_life_parallel(int threads, LifeBoard &state, int steps) {
     }
 
     pthread_barrier_destroy(&barrier);
-
-    // swap state and next_state ?
-
-    // allocate threads to each contiguous part of the board? (divide?)
-    // have them all calculate their areas in the func function and then wait
-    // free barrier and swap?
 }
