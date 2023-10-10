@@ -29,16 +29,16 @@ using namespace std::placeholders;
 TestFunction test_functions[] = {
     { simulate_life_serial, "serial" },
 
-    // { std::bind(&simulate_life_parallel, 1, _1, _2), "1 thread" },
+    { std::bind(&simulate_life_parallel, 1, _1, _2), "1 thread" },
     { std::bind(&simulate_life_parallel, 2, _1, _2), "2 threads" },
-    // { std::bind(&simulate_life_parallel, 3, _1, _2), "3 threads" },
-    // { std::bind(&simulate_life_parallel, 4, _1, _2), "4 threads" },
-    // { std::bind(&simulate_life_parallel, 8, _1, _2), "8 threads" },
-    // { std::bind(&simulate_life_parallel, 20, _1, _2), "20 threads" },
-    // { std::bind(&simulate_life_parallel, 30, _1, _2), "30 threads" },
-    // { std::bind(&simulate_life_parallel, 40, _1, _2), "40 threads" },
-    // { std::bind(&simulate_life_parallel, 60, _1, _2), "60 threads" },
-    // { std::bind(&simulate_life_parallel, 100, _1, _2), "100 threads" },
+    { std::bind(&simulate_life_parallel, 3, _1, _2), "3 threads" },
+    { std::bind(&simulate_life_parallel, 4, _1, _2), "4 threads" },
+    { std::bind(&simulate_life_parallel, 8, _1, _2), "8 threads" },
+    { std::bind(&simulate_life_parallel, 20, _1, _2), "20 threads" },
+    { std::bind(&simulate_life_parallel, 30, _1, _2), "30 threads" },
+    { std::bind(&simulate_life_parallel, 40, _1, _2), "40 threads" },
+    { std::bind(&simulate_life_parallel, 60, _1, _2), "60 threads" },
+    { std::bind(&simulate_life_parallel, 100, _1, _2), "100 threads" },
 };
 
 /* Given a number return a string using T, M, K to describe in a more readable way */
