@@ -32,16 +32,15 @@ void* func(void* arg) {
 
     int height = state->height();
 
-    // assign a chunk of state to a thread based on a predefined thread id
-    int rows_per_thread = height / num_threads;
-    int start_row = thread_id * rows_per_thread;
-    int end_row = (thread_id == num_threads - 1) ? height : start_row + rows_per_thread;
+    int rows_per_thread = (height - 2) / num_threads;
+    int start_row = 1 + thread_id * rows_per_thread;
+    int end_row = (thread_id == num_threads - 1) ? height - 1 : start_row + rows_per_thread;
 
     // Count live neighbours and Update next state is the same as single thread
     for (int step = 0; step < steps; ++step) {
         // Process the assigned portion of the board
-        for (int y = 1; y < height - 1; ++y) {
-            for (int x = start_row; x < end_row; ++x) {
+        for (int y = start_row; y < end_row; ++y) {
+            for (int x = 1; x < state->width()-1; ++x) {
                 int live_in_window = 0;
                 /* For each cell, examine a 3x3 "window" of cells around it,
                  * and count the number of live (true) cells in the window. */
@@ -61,9 +60,9 @@ void* func(void* arg) {
             }
         }
         pthread_barrier_wait(barrier);
-
-        swap(state, next_state);
-
+        if (thread_id == 0) {
+            swap(state, next_state);
+        }
         pthread_barrier_wait(barrier);
     }
     pthread_exit(NULL);
