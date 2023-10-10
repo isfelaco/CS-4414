@@ -45,7 +45,7 @@ life-tsan: main-tsan.o life-tsan.o timing-tsan.o life-parallel-tsan.o life-seria
 clean:
 	rm -f *.o
 
-SUBMIT_FILENAME=life-submission-$(shell date +%Y%m%d%H%M%S).tar.gz
+SUBMIT_FILENAME=isf4rjk.mtn7vez.lab5.tar.gz
 
 archive:
 	tar -zcf $(SUBMIT_FILENAME) $(wildcard *.cc *.h *.hh *.H *.cpp *.C *.c *.txt *.md *.pdf) Makefile 
