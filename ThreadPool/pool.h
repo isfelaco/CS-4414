@@ -21,7 +21,7 @@ public:
     void WaitForTask(const std::string &name);
 
     // Stop all threads. All tasks must have been waited for before calling this.
-    // You may assume that SubmitTask() is not caled after this is called.
+    // You may assume that SubmitTask() is not called after this is called.
     void Stop();
 };
 #endif
