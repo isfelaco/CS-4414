@@ -1,0 +1,5 @@
+partner 1: Bella Felaco, isf4rjk@virginia.edu
+
+partner 2: Michelle Nguyen, mtn7vez@virginia.edu
+
+We worked together on setting up threading and barriers, then debugged separately and shared any possible solutions.
