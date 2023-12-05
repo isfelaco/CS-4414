@@ -4,8 +4,9 @@
 #include <errno.h>
 #include <assert.h>
 #include "inode.h"
+#include <string.h>
 
-#define TOTAL_BLOCKS (10*1024)
+#define TOTAL_BLOCKS (10*1024) // need to change this because this will change with N 
 
 static unsigned char rawdata[TOTAL_BLOCKS*BLOCK_SZ];
 static char bitmap[TOTAL_BLOCKS];
@@ -13,9 +14,13 @@ static char bitmap[TOTAL_BLOCKS];
 int get_free_block()
 {
   // fill in here
+  /*
   assert(blockno < TOTAL_BLOCKS);
   assert(bitmap[blockno]);
   return blockno;
+  commented out to test arguments
+  */
+  return 0; // to test arguments, actual one will return blockno
 }
 
 void write_int(int pos, int val)
@@ -59,11 +64,71 @@ void place_file(char *file, int uid, int gid)
   printf("successfully wrote %d bytes of file %s\n", nbytes, file);
 }
 
-void main() // add argument handling
+void main(int argc, char* argv[]) // add argument handling
 {
   int i;
   FILE *outfile;
 
+  char* imagefile;
+  int nblocks;
+  int iblocks;
+  char* inputfile;
+  int uid;
+  int gid;
+  int block;
+  int inodepos;
+
+  char* mode; // for -create, -extract, -insert
+
+  // getting arguments 
+  for (int i = 0; i < argc; i++) {
+    if (strcmp(argv[i], "-image") == 0) {
+      imagefile = argv[i+1]; // get name of image as char array/string
+
+    } else if (strcmp(argv[i], "-nblocks") == 0) {
+      nblocks = atoi(argv[i+1]); // get number of blocks 
+      // can calculate TOTAL_BLOCKS with this * 1024
+
+    } else if (strcmp(argv[i], "-iblocks") == 0) {
+      iblocks = atoi(argv[i+1]); // number of blocks used for inodes
+      // denoted as M in assignment 
+
+    } else if (strcmp(argv[i], "-inputfile") == 0) {
+      inputfile = argv[i+1]; // file to be added 
+
+    } else if (strcmp(argv[i], "-u") == 0) {
+      uid = atoi(argv[i+1]); // uid 
+
+    } else if (strcmp(argv[i], "-g") == 0) {
+      gid = atoi(argv[i+1]); // gid 
+
+    } else if (strcmp(argv[i], "-block") == 0) {
+      block = atoi(argv[i+1]); // inode is placed in this block
+      // called D, must be smaller than M!
+
+    } else if (strcmp(argv[i], "-inodepos") == 0) {
+      inodepos = atoi(argv[i+1]); // position within block (in inodes, not bytes)
+      // listed as I on assignment
+
+    } else if (strcmp(argv[i], "-create") == 0) {
+      mode = "create";
+
+    } else if (strcmp(argv[i], "-extract") == 0) {
+      mode = "extract";
+
+    } else if (strcmp(argv[i], "-insert") == 0) {
+      mode = "insert";
+    }
+
+
+    // printf("here is argument %d : %s\n", i, argv[i]); for testing
+
+  }
+  printf("the mode is %s\n", mode);
+
+  // TODO: create, then extract, then insert (so we can use extract to test create)
+
+  /* // commented out for testing getting arguments, uncomment when ready
   outfile = fopen(output_filename, "wb");
   if (!outfile) {
     perror("datafile open");
@@ -85,5 +150,6 @@ void main() // add argument handling
   }
 
   printf("Done.\n");
+  */
   return;
 }
