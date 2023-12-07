@@ -8,6 +8,7 @@
 #include <time.h> // needed for the random() function
 
 #define TOTAL_BLOCKS (10*1024) // need to change this because this will change with N 
+#define INODE_SZ sizeof(struct inode)
 
 static unsigned char rawdata[TOTAL_BLOCKS*BLOCK_SZ];
 static char bitmap[TOTAL_BLOCKS];
@@ -109,6 +110,39 @@ void place_file(char *file, int uid, int gid)
   fclose(fpr); // close the file
 }
 
+void extract_files(char *imagefile, int uid, int gid, char *path) {
+  FILE* image = fopen(imagefile, "rb");
+  if (!image) {
+    perror("error opening disk image file");
+    exit(-1);
+  }
+
+  // TODO: read the disk image
+  /*
+    accepted formats: PDF, GIF, JPEG, TIFF, PNG, ASCII, HTML, Postscritp, or Encapsulated Postscript
+    for any files found:
+      reconstruct (based on uid and gid)
+      place output in directory specified by 'path' (assume it exists)
+      print to stdout: printf("file found at inode in block %d, file size %d", blockno, SZ);
+  */
+
+  // TODO: output list of unused blocks
+  /*
+    create file UNUSED_BLOCKS (i think bc its not provided) in 'path' directory
+    output the unused blocks as a sorted list, one block number per line
+  */
+  /*
+  printf("unused blocks:\n");
+  for (int blockno = 0; blockno < TOTAL_BLOCKS; blockno++) {
+      if (bitmap[blockno] == 0) { // block is unused
+          printf("%d\n", blockno);
+      }
+  }
+  */
+
+  fclose(image); // close the file
+}
+
 void main(int argc, char* argv[]) // add argument handling
 {
   int i;
@@ -191,38 +225,39 @@ void main(int argc, char* argv[]) // add argument handling
     exit(-1);
   }
 
-  // TODO: create, then extract, then insert (so we can use extract to test create)
   if (strcmp(mode, "create") == 0) {
-    /*
-      produce a disk image IMAGE_FILE of N total blocks of size 1024 bytes,
-        including the first M blocks which will be used for inodes
-      sets all the contents to zero
-      places a file 'inputfile' in the disk image using an inode that is
-        placed in block D (counting from 0) within the disk image,
-        at position I (couting from 0, in units of inodes, not bytes) within that block
-        specified uid and gid
-      should support files of any size that fits in within N-M blocks
-      checks that D < M and that I will fit in one block
-
-      ./disk_image -create -image output_disk_image.img -nblocks 100 -iblocks 5 -inputfile laptop_image -u 10578 -g 1231 -block 2 -inodepos 0
-    */
+    // ex command: ./disk_image -create -image output_disk_image.img -nblocks 100 -iblocks 5 -inputfile laptop_image -u 10578 -g 1231 -block 2 -inodepos 0
+    if (inputfile == NULL || uid == NULL || gid == NULL) {
+      fprintf(stderr, "missing required parameters for create mode\n");
+      exit(-1);
+    }
     place_file(inputfile, uid, gid);
+
+    // output to 'imagefile'
+    outfile = fopen(imagefile, "wb");
+    if (!outfile) {
+      perror("datafile open");
+      exit(-1);
+    }
+
+    i = fwrite(rawdata, 1, TOTAL_BLOCKS*BLOCK_SZ, outfile);
+    if (i != TOTAL_BLOCKS*BLOCK_SZ) {
+      perror("fwrite");
+      exit(-1);
+    }
+
+    i = fclose(outfile);
+    if (i) {
+      perror("datafile close");
+      exit(-1);
+    }
   } else if (strcmp(mode, "extract") == 0) {
-    /*
-      read an IMAGE_FILE specified with -image and reconstruct any files 
-      that can be found in one of the following formats:
-      PDF, GIF, JPEG, TIFF, PNG, ASCII, HTML, Postscritp, or Encapsulated Postscript
-      output should be placed in a directory specified by PATH (assume it exists)
+    if (imagefile == NULL || path == NULL) {
+      fprintf(stderr, "missing required parameters for extract mode\n");
+      exit(-1);
+    }
+    extract_files(imagefile, uid, gid, path); // TODO
 
-      for each candidate file found, the program should print to stdou the image block number
-        where the corresponding inode was found, and the size of the file in bytes
-        ex: "file found at inode in block NUM, file size SZ"
-          where NUM is the disk block number and SZ is the file size
-
-      produce a list of any disk blocks (numbered from 0) that are not used by the files it finds
-      output in a file called UNUSED_BLOCKS, placed in directory specified  by PATH
-        output the unused blocks as a sorted list, one block number per line
-    */
   } else if (strcmp(mode, "insert") == 0) {
     /*
       read a disk image IMAGE_FILE with N total blocks, of which the first M are inode blocks
@@ -233,27 +268,6 @@ void main(int argc, char* argv[]) // add argument handling
     */
   } else {
     fprintf(stderr, "unknown mode\n");
-    exit(-1);
-  }
-
-  // write the output to the output file
-  outfile = fopen(imagefile, "wb");
-  if (!outfile) {
-    perror("datafile open");
-    exit(-1);
-  }
-
-  // fill in here to place file 
-
-  i = fwrite(rawdata, 1, TOTAL_BLOCKS*BLOCK_SZ, outfile);
-  if (i != TOTAL_BLOCKS*BLOCK_SZ) {
-    perror("fwrite");
-    exit(-1);
-  }
-
-  i = fclose(outfile);
-  if (i) {
-    perror("datafile close");
     exit(-1);
   }
 
