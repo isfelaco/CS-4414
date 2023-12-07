@@ -158,6 +158,8 @@ void extract_files(char *imagefile, int uid, int gid, char *path) {
           fclose(outputfile);
 
           printf("file found at inode in block %d, file size %d\n", blockno, ip->size);
+
+          bitmap[blockno] = 1;
         }
       }
     }
