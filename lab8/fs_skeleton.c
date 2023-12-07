@@ -6,6 +6,8 @@
 #include "inode.h"
 #include <string.h>
 #include <time.h> // needed for the random() function
+#include <stdint.h>
+#include <stddef.h>
 
 #define TOTAL_BLOCKS (10*1024) // need to change this because this will change with N 
 #define INODE_SZ sizeof(struct inode)
@@ -117,30 +119,70 @@ void extract_files(char *imagefile, int uid, int gid, char *path) {
     exit(-1);
   }
 
-  // TODO: read the disk image
-  /*
-    accepted formats: PDF, GIF, JPEG, TIFF, PNG, ASCII, HTML, Postscritp, or Encapsulated Postscript
-    for any files found:
-      reconstruct (based on uid and gid)
-      place output in directory specified by 'path' (assume it exists)
-      print to stdout: printf("file found at inode in block %d, file size %d", blockno, SZ);
-  */
-
-  // TODO: output list of unused blocks
-  /*
-    create file UNUSED_BLOCKS (i think bc its not provided) in 'path' directory
-    output the unused blocks as a sorted list, one block number per line
-  */
-  /*
-  printf("unused blocks:\n");
-  for (int blockno = 0; blockno < TOTAL_BLOCKS; blockno++) {
-      if (bitmap[blockno] == 0) { // block is unused
-          printf("%d\n", blockno);
-      }
+  /* read the disk image */
+  size_t bytesRead = fread(rawdata, 1, sizeof(rawdata), image);
+  fclose(image);
+  if (bytesRead != sizeof(rawdata)) {
+    perror("error reading disk image");
+    fclose(image);
+    exit(-1);
   }
-  */
+  
+  for (int inodeIndex = 0; inodeIndex < TOTAL_BLOCKS; inodeIndex++) {
+    struct inode *ip = (struct inode*)&rawdata[inodeIndex * BLOCK_SZ];
 
-  fclose(image); // close the file
+    // check if inode is used
+    /*
+      issue: ip->uid != uid && ip->gid != gid even though they should
+      i temporarily removed the rest of the condition so i could test the rest
+      printf("Debug: bitmap[%d] = %d, uid = %d, gid = %d\n", inodeIndex, bitmap[inodeIndex], ip->uid, ip->gid);
+    */
+    if (ip->size > 0) { // && ip->uid == uid && ip->gid == gid
+      for (int i = 0; i < N_DBLOCKS; i++) {
+        int blockno = ip->dblocks[i];
+        if (blockno >= 0) {
+          char filepath[256];
+          snprintf(filepath, sizeof(filepath), "%s/file_%d_%d_%d", path, uid, gid, inodeIndex);          
+
+          // create a new file
+          FILE *outputfile = fopen(filepath, "wb");
+          if (!outputfile) {
+            perror("error creating output file");
+            exit(-1);
+          }
+
+          // write contents to the file
+          fwrite(&rawdata[blockno * BLOCK_SZ], 1, BLOCK_SZ, outputfile);
+
+          // close the output file
+          fclose(outputfile);
+
+          printf("file found at inode in block %d, file size %d\n", blockno, ip->size);
+        }
+      }
+    }
+  }
+
+  /* output list of unused blocks */
+  char filepath[256];
+  snprintf(filepath, sizeof(filepath), "%s/UNUSED_BLOCKS", path);          
+
+  // create a new file
+  FILE *outputfile = fopen(filepath, "wb");
+  if (!outputfile) {
+    perror("error creating output file");
+    exit(-1);
+  }
+
+  // write numbers of unused blocks to the file
+  for (int blockno = 0; blockno < TOTAL_BLOCKS; blockno++) {
+    if (bitmap[blockno] == 0) { // block is unused
+      fprintf(outputfile, "%d\n", blockno);
+    }
+  }
+
+  // close the output file
+  fclose(outputfile);
 }
 
 void main(int argc, char* argv[]) // add argument handling
@@ -159,12 +201,6 @@ void main(int argc, char* argv[]) // add argument handling
   char* path;
 
   char* mode; // for -create, -extract, -insert
-
-  // check there's enough args
-  if (argc < 14) {
-    fprintf(stderr, "not enough args\n");
-    exit(-1);
-  }
 
   // getting arguments 
   for (int i = 1; i < argc; i += 2) {
@@ -218,16 +254,17 @@ void main(int argc, char* argv[]) // add argument handling
     }
 
   }
-
-  // check that block is smaller than iblocks and inodepos is within bounds
-  if (block >= iblocks || inodepos >= N_DBLOCKS) {
-    fprintf(stderr, "invalid block or inode position\n");
-    exit(-1);
-  }
-
+  
   if (strcmp(mode, "create") == 0) {
     // ex command: ./disk_image -create -image output_disk_image.img -nblocks 100 -iblocks 5 -inputfile laptop_image -u 10578 -g 1231 -block 2 -inodepos 0
-    if (inputfile == NULL || uid == NULL || gid == NULL) {
+    
+    // check that block is smaller than iblocks and inodepos is within bounds
+    if (block >= iblocks || inodepos >= N_DBLOCKS) {
+      fprintf(stderr, "invalid block or inode position\n");
+      exit(-1);
+    }
+
+    if (inputfile == NULL || uid == 0 || gid == 0) {
       fprintf(stderr, "missing required parameters for create mode\n");
       exit(-1);
     }
@@ -252,6 +289,7 @@ void main(int argc, char* argv[]) // add argument handling
       exit(-1);
     }
   } else if (strcmp(mode, "extract") == 0) {
+    // ex command: ./disk_image -extract -image output_disk_image.img -u 10578 -g 1231 -o test
     if (imagefile == NULL || path == NULL) {
       fprintf(stderr, "missing required parameters for extract mode\n");
       exit(-1);
