@@ -15,8 +15,16 @@ static char bitmap[TOTAL_BLOCKS];
 int get_free_block()
 {
   int blockno = 0; // temp
+
+  while (blockno < TOTAL_BLOCKS && bitmap[blockno]) {
+      blockno++;
+  }
+
   assert(blockno < TOTAL_BLOCKS);
-  assert(bitmap[blockno]);
+  assert(!bitmap[blockno]);
+
+  bitmap[blockno] = 1;
+
   return blockno;
 }
 
@@ -34,14 +42,6 @@ void place_file(char *file, int uid, int gid)
   FILE *fpr;
   unsigned char buf[BLOCK_SZ];
 
-  ip->mode = 0;
-  ip->nlink = 1;
-  ip->uid = uid;
-  ip->gid = gid;
-  ip->ctime = random();
-  ip->mtime = random();
-  ip->atime = random();
-
   fpr = fopen(file, "rb");
   if (!fpr) {
     perror(file);
@@ -55,6 +55,14 @@ void place_file(char *file, int uid, int gid)
     free(ip);
     exit(-1);
   }
+
+  ip->mode = 0;
+  ip->nlink = 1;
+  ip->uid = uid;
+  ip->gid = gid;
+  ip->ctime = random();
+  ip->mtime = random();
+  ip->atime = random();
 
   // allocate direct blocks
   for (i = 0; i < N_DBLOCKS; i++) {
@@ -176,7 +184,6 @@ void main(int argc, char* argv[]) // add argument handling
     }
 
   }
-  printf("the mode is %s\n", mode);
 
   // check that block is smaller than iblocks and inodepos is within bounds
   if (block >= iblocks || inodepos >= N_DBLOCKS) {
@@ -184,19 +191,20 @@ void main(int argc, char* argv[]) // add argument handling
     exit(-1);
   }
 
-  char *output_filename;
   // TODO: create, then extract, then insert (so we can use extract to test create)
   if (strcmp(mode, "create") == 0) {
     /*
       produce a disk image IMAGE_FILE of N total blocks of size 1024 bytes,
         including the first M blocks which will be used for inodes
       sets all the contents to zero
-      places a file FILE in the disk image using an inode that is
+      places a file 'inputfile' in the disk image using an inode that is
         placed in block D (counting from 0) within the disk image,
         at position I (couting from 0, in units of inodes, not bytes) within that block
         specified uid and gid
       should support files of any size that fits in within N-M blocks
       checks that D < M and that I will fit in one block
+
+      ./disk_image -create -image output_disk_image.img -nblocks 100 -iblocks 5 -inputfile laptop_image -u 10578 -g 1231 -block 2 -inodepos 0
     */
     place_file(inputfile, uid, gid);
   } else if (strcmp(mode, "extract") == 0) {
@@ -215,7 +223,6 @@ void main(int argc, char* argv[]) // add argument handling
       output in a file called UNUSED_BLOCKS, placed in directory specified  by PATH
         output the unused blocks as a sorted list, one block number per line
     */
-    output_filename = "extract_out"; // temp, have to create output file in PATH
   } else if (strcmp(mode, "insert") == 0) {
     /*
       read a disk image IMAGE_FILE with N total blocks, of which the first M are inode blocks
@@ -226,12 +233,11 @@ void main(int argc, char* argv[]) // add argument handling
     */
   } else {
     fprintf(stderr, "unknown mode\n");
-    exit(EXIT_FAILURE);
+    exit(-1);
   }
 
   // write the output to the output file
-  // only writes to output for extract (?)
-  outfile = fopen(output_filename, "wb");
+  outfile = fopen(imagefile, "wb");
   if (!outfile) {
     perror("datafile open");
     exit(-1);
