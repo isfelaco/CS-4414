@@ -137,7 +137,7 @@ void extract_files(char *imagefile, int uid, int gid, char *path) {
       i temporarily removed the rest of the condition so i could test the rest
       printf("Debug: bitmap[%d] = %d, uid = %d, gid = %d\n", inodeIndex, bitmap[inodeIndex], ip->uid, ip->gid);
     */
-    if (ip->size > 0) { // && ip->uid == uid && ip->gid == gid
+    if (ip->size > 0 && ip->uid == uid && ip->gid == gid) {
       for (int i = 0; i < N_DBLOCKS; i++) {
         int blockno = ip->dblocks[i];
         if (blockno >= 0) {
